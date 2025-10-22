@@ -1,0 +1,159 @@
+---
+import { db, Dulces } from 'astro:db';
+
+export const prerender = false; // ← IMPORTANTE: Esto desactiva el caché estático
+
+const dulces = await db.select().from(Dulces);
+---
+
+<div class="contenedor">
+    <h1>Control de Stock</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Del Dulce</th>
+                <th>Nombre del Dulce</th>
+                <th>Cantidad en Stock</th>
+                <th>Vendidos</th>
+            </tr>
+        </thead>
+        <tbody>
+        {dulces.map((dulce) => (
+            <tr>
+                <td>{dulce.id}</td>
+                <td>{dulce.nombre}</td>
+                <td>{dulce.stock}</td>
+                <td>{dulce.vendidos}</td>
+            </tr>
+        ))}
+        </tbody>
+    </table>
+
+    <div class="botones">
+        <button class="boton-agregar" onclick="agregarDulce()">Agregar nuevo producto</button>
+        <button class="boton-compra" onclick="agregarCompra()">Agregar nueva compra</button>
+        <button class="boton-venta" onclick="agregarVenta()">Agregar nueva venta</button>
+    </div>
+</div>
+
+<script is:inline>
+window.agregarDulce = async function() {
+    const nombre = prompt("Nombre del dulce:");
+    const stock = parseInt(prompt("Cantidad inicial en stock:"), 10);
+    if (!nombre || isNaN(stock)) return alert("Datos inválidos");
+
+    try {
+        const res = await fetch("/api/agregarDulce", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, stock })
+        });
+        const data = await res.json();
+        if (data.ok) location.reload();
+        else alert("Error: " + (data.error || "Desconocido"));
+    } catch {
+        alert("Error al comunicarse con el servidor.");
+    }
+}
+
+window.agregarCompra = async function() {
+    const id = parseInt(prompt("ID del dulce:"), 10);
+    const cantidad = parseInt(prompt("Cantidad comprada:"), 10);
+    if (isNaN(id) || isNaN(cantidad)) return alert("Datos inválidos");
+
+    try {
+        const res = await fetch("/api/agregarCompra", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, cantidad })
+        });
+        const data = await res.json();
+        if (data.ok) location.reload();
+        else alert("Error: " + (data.error || "Desconocido"));
+    } catch {
+        alert("Error al comunicarse con el servidor.");
+    }
+}
+
+window.agregarVenta = async function() {
+    const id = parseInt(prompt("ID del dulce:"), 10);
+    const cantidad = parseInt(prompt("Cantidad vendida:"), 10);
+    if (isNaN(id) || isNaN(cantidad)) return alert("Datos inválidos");
+
+    try {
+        const res = await fetch("/api/agregarVenta", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, cantidad })
+        });
+        const data = await res.json();
+        if (data.ok) location.reload();
+        else alert("Error: " + (data.error || "Desconocido"));
+    } catch {
+        alert("Error al comunicarse con el servidor.");
+    }
+}
+</script>
+
+<style>
+.contenedor {
+    padding: 50px 10%;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 30px;
+    font-size: 40px;
+    font-weight: 700;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #ee4a5a;
+    color: white;
+    font-size: 18px;
+}
+
+td {
+    color: black;
+    font-size: 16px;
+}
+
+tr:hover {
+    background-color: #ffeef1;
+}
+
+.botones button {
+    display: inline-block;
+    margin-top: 25px;
+    margin-right: 10px;
+    background-color: #ee4a5a;
+    color: white;
+    border-radius: 25px;
+    padding: 15px 50px;
+    font-weight: bold;
+    transition: 0.3s;
+    border: none;
+    cursor: pointer;
+}
+
+.botones button:hover {
+    background-color: white;
+    color: #ee4a5a;
+    border: 2px solid #ee4a5a;
+}
+</style>

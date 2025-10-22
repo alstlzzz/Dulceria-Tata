@@ -1,0 +1,53 @@
+---
+import logo from "../assets/logo.png"
+---
+
+ <div class="container">
+        <div>
+            <h1 class="titulo">¡Bienvenido a <br>Dulcería Tata!</h1>
+            <a class="boton" href="/stock">Controlar Stock</a>
+        </div>
+        <img src={logo.src} alt="Logo de Tata">
+    </div>
+
+  <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80vh;
+            padding: 0 80px;
+        }
+
+        .titulo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        img {
+            width: 35%;
+        }
+
+        .boton {
+            background-color: #ee4a5a;
+            color: white;
+            border-radius: 25px;
+            padding: 15px 60px;
+            display: inline-block;
+            margin-top: 25px;
+            font-family: Calibri;
+            font-weight: bold;
+            transition: 0.3s;
+            text-decoration: none;
+        }
+
+        .boton:hover {
+            background-color: white;
+            color: #ee4a5a;
+            border: 2px solid #ee4a5a;
+        }
+
+  </style>
+</section>
