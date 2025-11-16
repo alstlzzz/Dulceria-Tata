@@ -1,7 +1,7 @@
 ---
-import { db, Dulces } from 'astro:db';
+import { db, Dulces } from "astro:db";
 
-export const prerender = false; // ← IMPORTANTE: Esto desactiva el caché estático
+export const prerender = false;
 
 const dulces = await db.select().from(Dulces);
 ---
@@ -16,8 +16,11 @@ const dulces = await db.select().from(Dulces);
                 <th>Nombre del Dulce</th>
                 <th>Cantidad en Stock</th>
                 <th>Vendidos</th>
+                <th>Precio</th>
+                <th>Acciones</th>
             </tr>
         </thead>
+
         <tbody>
         {dulces.map((dulce) => (
             <tr>
@@ -25,6 +28,12 @@ const dulces = await db.select().from(Dulces);
                 <td>{dulce.nombre}</td>
                 <td>{dulce.stock}</td>
                 <td>{dulce.vendidos}</td>
+                <td>${dulce.precio?.toFixed(2)}</td>
+                <td>
+                    <button class="boton-editar" onclick={`editarProducto(${dulce.id}, '${dulce.nombre}', ${dulce.stock}, ${dulce.precio})`}>
+                        Editar
+                    </button>
+                </td>
             </tr>
         ))}
         </tbody>
@@ -37,21 +46,49 @@ const dulces = await db.select().from(Dulces);
     </div>
 </div>
 
+<!-- MODAL -->
+<div id="modal-editar" class="modal">
+    <div class="modal-contenido">
+        <h2>Editar Producto</h2>
+
+        <input type="hidden" id="edit-id">
+
+        <label>Nombre:</label>
+        <input id="edit-nombre" class="campo">
+
+        <label>Stock:</label>
+        <input id="edit-stock" type="number" class="campo">
+
+        <label>Precio:</label>
+        <input id="edit-precio" type="number" class="campo">
+
+        <div class="modal-botones">
+            <button class="cerrar" onclick="cerrarModal()">Cancelar</button>
+            <button class="guardar" onclick="guardarCambios()">Guardar</button>
+        </div>
+    </div>
+</div>
+
 <script is:inline>
 window.agregarDulce = async function() {
     const nombre = prompt("Nombre del dulce:");
     const stock = parseInt(prompt("Cantidad inicial en stock:"), 10);
-    if (!nombre || isNaN(stock)) return alert("Datos inválidos");
+    const precio = parseFloat(prompt("Precio del dulce (en pesos):"));
+
+    if (!nombre || isNaN(stock) || isNaN(precio))
+        return alert("Datos inválidos");
 
     try {
         const res = await fetch("/api/agregarDulce", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre, stock })
+            body: JSON.stringify({ nombre, stock, precio })
         });
+
         const data = await res.json();
         if (data.ok) location.reload();
         else alert("Error: " + (data.error || "Desconocido"));
+
     } catch {
         alert("Error al comunicarse con el servidor.");
     }
@@ -68,6 +105,7 @@ window.agregarCompra = async function() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, cantidad })
         });
+
         const data = await res.json();
         if (data.ok) location.reload();
         else alert("Error: " + (data.error || "Desconocido"));
@@ -87,6 +125,7 @@ window.agregarVenta = async function() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, cantidad })
         });
+
         const data = await res.json();
         if (data.ok) location.reload();
         else alert("Error: " + (data.error || "Desconocido"));
@@ -94,9 +133,41 @@ window.agregarVenta = async function() {
         alert("Error al comunicarse con el servidor.");
     }
 }
+
+window.editarProducto = function(id, nombre, stock, precio) {
+    document.getElementById("edit-id").value = id;
+    document.getElementById("edit-nombre").value = nombre;
+    document.getElementById("edit-stock").value = stock;
+    document.getElementById("edit-precio").value = precio;
+
+    document.getElementById("modal-editar").style.display = "flex";
+}
+
+window.cerrarModal = function() {
+    document.getElementById("modal-editar").style.display = "none";
+}
+
+window.guardarCambios = async function() {
+    const id = parseInt(document.getElementById("edit-id").value);
+    const nombre = document.getElementById("edit-nombre").value;
+    const stock = parseInt(document.getElementById("edit-stock").value);
+    const precio = parseFloat(document.getElementById("edit-precio").value);
+
+    const res = await fetch("/api/editar-dulce", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, nombre, stock, precio })
+    });
+
+    const data = await res.json();
+
+    if (data.ok) location.reload();
+    else alert("Error al guardar: " + data.error);
+}
 </script>
 
 <style>
+/* Contenedor general */
 .contenedor {
     padding: 50px 10%;
     text-align: center;
@@ -108,6 +179,7 @@ h1 {
     font-weight: 700;
 }
 
+/* Tabla */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -137,23 +209,74 @@ tr:hover {
     background-color: #ffeef1;
 }
 
-.botones button {
+/* Botones */
+.botones button, .boton-editar {
     display: inline-block;
     margin-top: 25px;
     margin-right: 10px;
     background-color: #ee4a5a;
     color: white;
     border-radius: 25px;
-    padding: 15px 50px;
+    padding: 10px 22px;
     font-weight: bold;
     transition: 0.3s;
     border: none;
     cursor: pointer;
 }
 
-.botones button:hover {
+.botones button:hover,
+.boton-editar:hover {
     background-color: white;
     color: #ee4a5a;
     border: 2px solid #ee4a5a;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-contenido {
+    background: white;
+    padding: 25px;
+    width: 350px;
+    border-radius: 15px;
+    text-align: left;
+}
+
+.campo {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.modal-botones {
+    display: flex;
+    justify-content: space-between;
+}
+
+.cerrar, .guardar {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.cerrar {
+    background: gray;
+    color: white;
+}
+
+.guardar {
+    background: #4caf50;
+    color: white;
 }
 </style>

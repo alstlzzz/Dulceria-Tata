@@ -1,24 +1,20 @@
-import { db, Dulces } from 'astro:db';
+import { db, Dulces, eq } from "astro:db";
 
 export async function POST({ request }: { request: Request }) {
   try {
-    const { nombre, stock, precio } = await request.json();
+    const { id, nombre, stock, precio } = await request.json();
 
-    // Validación
-    if (!nombre || typeof stock !== 'number' || typeof precio !== 'number') {
+    if (!id || !nombre || typeof stock !== "number" || typeof precio !== "number") {
       return new Response(JSON.stringify({ ok: false, error: "Datos inválidos" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Inserción
-    await db.insert(Dulces).values({
-      nombre,
-      stock,
-      vendidos: 0,
-      precio, // 👈 SE AGREGA EL PRECIO
-    });
+    await db
+      .update(Dulces)
+      .set({ nombre, stock, precio })
+      .where(eq(Dulces.id, id));
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
